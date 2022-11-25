@@ -32,6 +32,7 @@ module Via
 
       if !params[:issue_id]
         print "Please provide an issue id"
+        exit
       end
 
       Launchy.open("https://github.com/viaeurope/viaeurope/issues/#{params[:issue_id]}")
