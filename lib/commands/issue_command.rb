@@ -1,6 +1,7 @@
 require "tty-option"
 require "tty-markdown"
 require "pastel"
+require "launchy"
 require_relative "../linear_api"
 
 module Via
@@ -22,7 +23,7 @@ module Via
     argument :option do
       optional
       name "Action"
-      permit %w[branch]
+      permit %w[branch open]
     end
 
     flag :help do
@@ -52,6 +53,10 @@ module Via
               issue["branchName"]
             end.join("\n")
           )
+        elsif params[:option] == "open"
+          issues.each do |issue|
+            Launchy.open("https://linear.app/viaeurope/issue/#{issue["identifier"]}")
+          end
         else
           puts(issues.map do |issue|
             issue_to_text(issue)
