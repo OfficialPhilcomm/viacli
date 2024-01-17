@@ -1,5 +1,7 @@
 require "tty-option"
-require "launchy"
+require "tty-markdown"
+require "pastel"
+require_relative "../linear_api"
 
 module Via
   class IssueCommand
@@ -12,10 +14,15 @@ module Via
       description "Open a specific GitHub issue"
     end
 
-    argument :issue_id do
+    argument :id do
       required
-      desc "GitHub Issue ID"
-      convert Integer
+      desc "Linear Issue ID"
+    end
+
+    argument :option do
+      optional
+      name "Action"
+      permit %w[branch]
     end
 
     flag :help do
@@ -27,15 +34,47 @@ module Via
     def run
       if params[:help]
         print help
-        exit
-      end
+      elsif params.errors.any?
+        puts params.errors.summary
+      else
+        issues = case params[:id]
+        when "current"
+          LinearAPI.new.get_current_issues
+        when "next"
+          [LinearAPI.new.get_next_cycle_issue]
+        else
+          [LinearAPI.new.get_issue(params[:id])]
+        end
 
-      if !params[:issue_id]
-        print "Please provide an issue id"
-        exit
+        if params[:option] == "branch"
+          puts(
+            issues.map do |issue|
+              issue["branchName"]
+            end.join("\n")
+          )
+        else
+          puts(issues.map do |issue|
+            issue_to_text(issue)
+          end.join("\n\n"))
+        end
       end
+    end
 
-      Launchy.open("https://github.com/viaeurope/viaeurope/issues/#{params[:issue_id]}")
+    def issue_to_text(issue)
+      pastel = Pastel.new
+
+      formatted_description = TTY::Markdown
+        .parse(
+          issue["description"].gsub(/~.*~/) do |str|
+            pastel.strikethrough(str[1..-2])
+          end
+        )
+
+      <<~TEXT
+        #{pastel.cyan(issue["identifier"])}: #{pastel.green(issue["title"])}
+
+        #{formatted_description}
+      TEXT
     end
   end
 end
