@@ -32,6 +32,12 @@ module Via
       desc "Print this page"
     end
 
+    flag :checkout do
+      short "-c"
+      long "--checkout"
+      desc "Checkout to the issue branch"
+    end
+
     def run
       if params[:help]
         print help
@@ -48,11 +54,15 @@ module Via
         end
 
         if params[:option] == "branch"
-          puts(
-            issues.map do |issue|
-              issue["branchName"]
-            end.join("\n")
-          )
+          if params[:checkout] && issues.one?
+            system("git checkout #{issues.first["branchName"]}") || system("git checkout -b #{issues.first["branchName"]}")
+          else
+            puts(
+              issues.map do |issue|
+                issue["branchName"]
+              end.join("\n")
+            )
+          end
         elsif params[:option] == "open"
           issues.each do |issue|
             Launchy.open("https://linear.app/viaeurope/issue/#{issue["identifier"]}")
