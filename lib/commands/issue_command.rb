@@ -39,39 +39,36 @@ module Via
     end
 
     def run
-      if params[:help]
-        print help
-      elsif params.errors.any?
-        puts params.errors.summary
-      else
-        issues = case params[:id]
-        when "current"
-          LinearAPI.new.get_current_issues
-        when "next"
-          [LinearAPI.new.get_next_cycle_issue]
-        else
-          [LinearAPI.new.get_issue(params[:id])]
-        end
+      return print(help) if params[:help]
+      return puts(params.errors.summary) if params.errors.any?
 
-        if params[:option] == "branch"
-          if params[:checkout] && issues.one?
-            system("git checkout #{issues.first["branchName"]}") || system("git checkout -b #{issues.first["branchName"]}")
-          else
-            puts(
-              issues.map do |issue|
-                issue["branchName"]
-              end.join("\n")
-            )
-          end
-        elsif params[:option] == "open"
-          issues.each do |issue|
-            Launchy.open("https://linear.app/viaeurope/issue/#{issue["identifier"]}")
-          end
+      issues = case params[:id]
+      when "current"
+        LinearAPI.new.get_current_issues
+      when "next"
+        [LinearAPI.new.get_next_cycle_issue]
+      else
+        [LinearAPI.new.get_issue(params[:id])]
+      end
+
+      if params[:option] == "branch"
+        if params[:checkout] && issues.one?
+          system("git checkout #{issues.first["branchName"]}") || system("git checkout -b #{issues.first["branchName"]}")
         else
-          puts(issues.map do |issue|
-            issue_to_text(issue)
-          end.join("\n\n"))
+          puts(
+            issues.map do |issue|
+              issue["branchName"]
+            end.join("\n")
+          )
         end
+      elsif params[:option] == "open"
+        issues.each do |issue|
+          Launchy.open("https://linear.app/viaeurope/issue/#{issue["identifier"]}")
+        end
+      else
+        puts(issues.map do |issue|
+          issue_to_text(issue)
+        end.join("\n\n"))
       end
     end
 
