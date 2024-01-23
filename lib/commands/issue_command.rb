@@ -115,12 +115,12 @@ module Via
 
       case params[:format]
       when "summary"
-        text << TTY::Markdown.parse(pastel.bright_green(SummarizeModel.new.next(<<~STR)))
+        text << pastel.bright_green(pastel.strip(TTY::Markdown.parse(SummarizeModel.new.next(<<~STR))))
           Title: #{issue["title"]}
           Description: #{issue["description"]}
         STR
       when "poem"
-        text << TTY::Markdown.parse(pastel.bright_green(PoemizeModel.new.next(<<~STR)))
+        text << pastel.bright_green(pastel.strip(TTY::Markdown.parse(PoemizeModel.new.next(<<~STR))))
           Title: #{issue["title"]}
           Description: #{issue["description"]}
         STR
