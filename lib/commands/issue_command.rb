@@ -3,6 +3,27 @@ require "tty-markdown"
 require "pastel"
 require "launchy"
 require_relative "../linear_api"
+require_relative "../openai"
+
+class SummarizeModel
+  include OpenAI
+
+  model OpenAI::GPT_3_5_TURBO
+
+  prompt <<~PROMPT
+    You are given a tech issue. Please give a quick summary of the issue. Thank you
+  PROMPT
+end
+
+class PoemizeModel
+  include OpenAI
+
+  model OpenAI::GPT_3_5_TURBO
+
+  prompt <<~PROMPT
+    You are given a tech issue. Please summarize it in a poem. Thank you
+  PROMPT
+end
 
 module Via
   class IssueCommand
@@ -36,6 +57,14 @@ module Via
       short "-c"
       long "--checkout"
       desc "Checkout to the issue branch"
+    end
+
+    option :format do
+      short "-f"
+      long "--format string"
+      desc "Format of the output"
+      default "markdown"
+      permit %w[markdown summary poem]
     end
 
     def run
@@ -82,11 +111,24 @@ module Via
           end
         )
 
-      <<~TEXT
-        #{pastel.cyan(issue["identifier"])}: #{pastel.green(issue["title"])}
+      text = ["#{pastel.cyan(issue["identifier"])}: #{pastel.green(issue["title"])}"]
 
-        #{formatted_description}
-      TEXT
+      case params[:format]
+      when "summary"
+        text << TTY::Markdown.parse(SummarizeModel.new.next(pastel.cyan(<<~STR)))
+          Title: #{issue["title"]}
+          Description: #{issue["description"]}
+        STR
+      when "poem"
+        text << TTY::Markdown.parse(PoemizeModel.new.next(pastel.cyan(<<~STR)))
+          Title: #{issue["title"]}
+          Description: #{issue["description"]}
+        STR
+      end
+
+      text << formatted_description
+
+      text.join("\n\n")
     end
   end
 end

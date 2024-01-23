@@ -88,8 +88,10 @@ class LinearAPI
     result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
     issues = result["data"]["cycles"]["nodes"].first["issues"]["nodes"]
 
+    priority_map = [5, 1, 2, 3, 4]
+
     issues.sort_by do |issue|
-      issue["sortOrder"]
+      [priority_map[issue["priority"]], issue["sortOrder"]]
     end.first
   end
 end
