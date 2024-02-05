@@ -1,4 +1,6 @@
+require "git"
 require "tty-option"
+require "tty-prompt"
 require "tty-markdown"
 require "pastel"
 require "launchy"
@@ -41,12 +43,6 @@ module Via
       desc "Linear Issue ID"
     end
 
-    argument :option do
-      optional
-      name "Action"
-      permit %w[branch open]
-    end
-
     flag :help do
       short "-h"
       long "--help"
@@ -57,6 +53,12 @@ module Via
       short "-c"
       long "--checkout"
       desc "Checkout to the issue branch"
+    end
+
+    flag :open do
+      short "-o"
+      long "--open"
+      desc "Opens the issue on Linear"
     end
 
     option :format do
@@ -80,17 +82,13 @@ module Via
         [LinearAPI.new.get_issue(params[:id])]
       end
 
-      if params[:option] == "branch"
-        if params[:checkout] && issues.one?
-          system("git checkout #{issues.first["branchName"]}") || system("git checkout -b #{issues.first["branchName"]}")
-        else
-          puts(
-            issues.map do |issue|
-              issue["branchName"]
-            end.join("\n")
-          )
-        end
-      elsif params[:option] == "open"
+      return puts("No issues found") if issues.none?
+
+      if params[:checkout]
+        git = Git.open(Dir.pwd)
+        issue = select_issue(issues)
+        git.branch(issue["branchName"]).checkout
+      elsif params[:open]
         issues.each do |issue|
           Launchy.open("https://linear.app/viaeurope/issue/#{issue["identifier"]}")
         end
@@ -129,6 +127,19 @@ module Via
       text << formatted_description
 
       text.join("\n\n")
+    end
+
+    def select_issue(issues)
+      return issues.first if issues.one?
+
+      pastel = Pastel.new
+
+      formatted_issues = issues.map do |issue|
+        {name: "#{pastel.cyan(issue["identifier"])}: #{pastel.green(issue["title"])}", value: issue}
+      end
+
+      prompt = TTY::Prompt.new
+      prompt.select("Which issue?", formatted_issues)
     end
   end
 end

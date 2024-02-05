@@ -31,7 +31,7 @@ class LinearAPI
     query = <<~GRAPHQL
       issues(filter: {
         team: { name: { eq: "Platform" } }
-        state: { name: { eq: "In Progress" } }
+        state: { name: { in: ["In Progress", "Review"] } }
         assignee: {
           isMe: { eq: true }
         }

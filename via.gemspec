@@ -14,5 +14,7 @@ Gem::Specification.new do |s|
   s.executables = ['via']
 
   s.add_dependency "tty-option", ["~> 0.2"]
+  s.add_dependency "tty-prompt", ["~> 0.23.1"]
   s.add_dependency "launchy", ["~> 2.5"]
+  s.add_dependency "git", ["~> 1.19"]
 end
