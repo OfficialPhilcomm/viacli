@@ -21,6 +21,14 @@ class LinearAPI
         priorityLabel
         sortOrder
         branchName
+        comments {
+          nodes {
+            body
+            user {
+              name
+            }
+          }
+        }
       }
     GRAPHQL
     result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
@@ -47,6 +55,14 @@ class LinearAPI
           priorityLabel
           sortOrder
           branchName
+          comments {
+            nodes {
+              body
+              user {
+                name
+              }
+            }
+          }
         }
       }
     GRAPHQL

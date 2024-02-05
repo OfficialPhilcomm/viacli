@@ -126,6 +126,13 @@ module Via
 
       text << formatted_description
 
+      if issue.has_key? "comments"
+        issue["comments"]["nodes"].each do |comment|
+          formatted_comment = pastel.green(comment["user"]["name"] + " commented:") + "\n" + TTY::Markdown.parse(comment["body"])
+          text << formatted_comment.chomp
+        end
+      end
+
       text.join("\n\n")
     end
 
