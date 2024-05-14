@@ -1,3 +1,4 @@
+require "json"
 require "httparty"
 require "event_stream_parser"
 

@@ -1,3 +1,4 @@
+require "json"
 require "httparty"
 require_relative "persistent_memory"
 
