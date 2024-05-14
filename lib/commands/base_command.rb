@@ -10,7 +10,8 @@ module Via
 
       description "Via Toolkit",
         "\nCommands:",
-        "  via issue [issue] - Create a new project"
+        "  via issue - Fetch issue data"
+        "  via setup - Setup the project"
     end
 
     flag :help do

@@ -1,4 +1,5 @@
 require "httparty"
+require_relative "persistent_memory"
 
 class LinearAPI
   include HTTParty
@@ -7,6 +8,8 @@ class LinearAPI
 
   headers "Content-Type": "application/json"
   headers "Authorization": ENV["LINEAR_API_TOKEN"]
+
+  STATE_IN_PROGRESS = "c692bedf-432b-40ba-acbb-3657ad8113e2"
 
   def get_issue(ref)
     query = <<~GRAPHQL
@@ -50,6 +53,10 @@ class LinearAPI
           description
           state {
             name
+          }
+          assignee {
+            name
+            id
           }
           priority
           priorityLabel
@@ -109,5 +116,37 @@ class LinearAPI
     issues.sort_by do |issue|
       [priority_map[issue["priority"]], issue["sortOrder"]]
     end.first
+  end
+
+  def assign_issue(issue_id)
+    user_id = PersistentMemory.new("user_id").state
+    return puts("User ID not set. Use via setup") if user_id.nil?
+
+    query = <<~GRAPHQL
+      issueUpdate(
+        id: "#{issue_id}",
+        input: {
+          stateId: "#{STATE_IN_PROGRESS}",
+          assigneeId: "#{user_id}"
+        }
+      ) {
+        success
+        issue {
+          identifier
+        }
+      }
+    GRAPHQL
+    result = self.class.post("/graphql", body: {query: "mutation {#{query}}"}.to_json)
+    result["data"]
+  end
+
+  def get_viewer_id
+    query = <<~GRAPHQL
+      viewer {
+        id
+      }
+    GRAPHQL
+    result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
+    result["data"]["viewer"]["id"]
   end
 end

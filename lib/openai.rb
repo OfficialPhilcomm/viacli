@@ -1,8 +1,9 @@
 require "httparty"
+require "event_stream_parser"
 
 module OpenAI
   GPT_3_5_TURBO = "gpt-3.5-turbo"
-  GPT_4 = "gpt-4"
+  GPT_4_TURBO = "gpt-4-turbo"
 
   module ClassMethods
     def prompt(message)
@@ -14,12 +15,12 @@ module OpenAI
     end
 
     def model(gpt_model)
-      @@model = gpt_model
+      @model = gpt_model
     end
 
     def get_model
-      if defined?(@@model)
-        @@model
+      if defined?(@model)
+        @model
       else
         GPT_3_5_TURBO
       end
@@ -42,13 +43,29 @@ module OpenAI
   def next(message)
     @messages << {"role" => "user", "content" => message}
 
-    response = self.class.post "/completions", body: {
+    new_message = {"content" => ""}
+    parser = EventStreamParser::Parser.new
+
+    self.class.post "/completions", body: {
       model: self.class.get_model,
       messages: @messages,
-      temperature: 0.7
-    }.to_json
+      temperature: 0.7,
+      stream: true
+    }.to_json do |fragment|
+      next unless fragment.code == 200
 
-    new_message = JSON.parse(response.body)["choices"][0]["message"]
+      parser.feed(fragment) do |_type, data, _id, _reconnection_time|
+        if data != "[DONE]"
+          delta = JSON.parse(data)["choices"][0]["delta"]
+
+          new_message["role"] = delta["role"] if delta["role"]
+          new_message["content"] += delta["content"] if delta["content"]
+
+          yield(delta["content"]) if block_given?
+        end
+      end
+    end
+
     @messages << new_message
     new_message["content"]
   end
