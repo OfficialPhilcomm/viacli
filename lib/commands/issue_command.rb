@@ -4,10 +4,10 @@ require "tty-prompt"
 require "tty-markdown"
 require "pastel"
 require "launchy"
+require "markdown_stream_formatter"
 require_relative "../linear_api"
 require_relative "../openai"
 require_relative "../persistent_memory"
-require_relative "../markdown_formatter"
 
 class SummarizeModel
   include OpenAI
@@ -233,16 +233,14 @@ module Via
           input = STDIN.gets.chomp
           break if input == "exit"
 
-          markdown_formatter = MarkdownFormatter.new
+          formatter = MarkdownStreamFormatter.new
 
           puts "\n\e[32m\e[4mGPT\e[0m"
           gpt.next(input) do |chunk|
-            print markdown_formatter.format(chunk)
+            print formatter.next(chunk)
           end
 
           puts "\n\n"
-
-          # puts "#{TTY::Markdown.parse(gpt.next(input))}\n"
         rescue Interrupt
           quit = true
         end

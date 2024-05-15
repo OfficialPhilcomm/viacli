@@ -22,4 +22,5 @@ Gem::Specification.new do |s|
   s.add_dependency "msgpack", ["~> 1.7"]
   s.add_dependency "httparty", ["~> 0.22.0"]
   s.add_dependency "event_stream_parser", ["~> 1.0"]
+  s.add_dependency "markdown_stream_formatter", ["~> 1.0"]
 end
