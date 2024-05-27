@@ -98,6 +98,11 @@ module Via
       desc "Let GPT answer questions"
     end
 
+    flag :finish do
+      long "--finish"
+      desc "Mark the issue as done"
+    end
+
     option :format do
       short "-f"
       long "--format string"
@@ -136,6 +141,15 @@ module Via
 
         if result["issueUpdate"]["success"]
           puts "You are now assigned to issue #{result["issueUpdate"]["issue"]["identifier"]}"
+        else
+          puts "Something went wrong"
+        end
+      elsif params[:finish]
+        issue = select_issue(issues)
+        result = LinearAPI.new.finish_issue(issue["identifier"])
+
+        if result["issueUpdate"]["success"]
+          puts "Issue #{result["issueUpdate"]["issue"]["identifier"]} is now marked as done!"
         else
           puts "Something went wrong"
         end
