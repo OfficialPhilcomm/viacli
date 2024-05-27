@@ -1,6 +1,7 @@
 require "json"
 require "httparty"
 require_relative "persistent_memory"
+require_relative "models/issue"
 
 class LinearAPI
   include HTTParty
@@ -11,6 +12,7 @@ class LinearAPI
   headers "Authorization": ENV["LINEAR_API_TOKEN"]
 
   STATE_IN_PROGRESS = "c692bedf-432b-40ba-acbb-3657ad8113e2"
+  STATE_DONE = "cd6c7a8a-05b2-40fe-8e67-a8c2dbd07273"
 
   def get_issue(ref)
     query = <<~GRAPHQL
@@ -36,7 +38,7 @@ class LinearAPI
       }
     GRAPHQL
     result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
-    result["data"]["issue"]
+    Issue.new(result["data"]["issue"])
   end
 
   def get_current_issues
@@ -75,7 +77,9 @@ class LinearAPI
       }
     GRAPHQL
     result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
-    result["data"]["issues"]["nodes"]
+    result["data"]["issues"]["nodes"].map do |issue|
+      Issue.new(issue)
+    end
   end
 
   def get_next_cycle_issue
@@ -114,9 +118,11 @@ class LinearAPI
 
     priority_map = [5, 1, 2, 3, 4]
 
-    issues.sort_by do |issue|
+    issue = issues.sort_by do |issue|
       [priority_map[issue["priority"]], issue["sortOrder"]]
     end.first
+
+    Issue.new(issue)
   end
 
   def assign_issue(issue_id)
@@ -127,7 +133,28 @@ class LinearAPI
       issueUpdate(
         id: "#{issue_id}",
         input: {
-          stateId: "#{STATE_IN_PROGRESS}",
+          stateId: "#{STATE_IN_PROGRESS}"
+        }
+      ) {
+        success
+        issue {
+          identifier
+        }
+      }
+    GRAPHQL
+    result = self.class.post("/graphql", body: {query: "mutation {#{query}}"}.to_json)
+    result["data"]
+  end
+
+  def finish_issue(issue_id)
+    user_id = PersistentMemory.new("user_id").state
+    return puts("User ID not set. Use via setup") if user_id.nil?
+
+    query = <<~GRAPHQL
+      issueUpdate(
+        id: "#{issue_id}",
+        input: {
+          stateId: "#{STATE_DONE}",
           assigneeId: "#{user_id}"
         }
       ) {

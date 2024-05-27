@@ -8,26 +8,7 @@ require "markdown_stream_formatter"
 require_relative "../linear_api"
 require_relative "../openai"
 require_relative "../persistent_memory"
-
-class SummarizeModel
-  include OpenAI
-
-  model OpenAI::GPT_3_5_TURBO
-
-  prompt <<~PROMPT
-    You are given a tech issue. Please give a quick summary of the issue. Thank you
-  PROMPT
-end
-
-class PoemizeModel
-  include OpenAI
-
-  model OpenAI::GPT_3_5_TURBO
-
-  prompt <<~PROMPT
-    You are given a tech issue. Please summarize it in a poem. Thank you
-  PROMPT
-end
+require_relative "../models/issue"
 
 class AskGPTModel
   include OpenAI
@@ -38,8 +19,8 @@ class AskGPTModel
     self.class.prompt <<~PROMPT
       Here is a tech issue. Please assist with any questions.
 
-      Title: #{issue["title"]}
-      Description: #{issue["description"]}
+      Title: #{issue.title}
+      Description: #{issue.description}
     PROMPT
 
     @messages = [{"role" => "system", "content" => self.class.get_prompt}]
@@ -119,7 +100,7 @@ module Via
 
       return puts("No issues found") if issues.none?
 
-      last_issues.state = issues.map {|issue| issue["identifier"]}.join("\n")
+      last_issues.state = issues.map {|issue| issue.identifier}.join("\n")
 
       issues = [select_issue(issues)] if params[:select]
 
@@ -130,10 +111,10 @@ module Via
       elsif params[:checkout]
         git = Git.open(Dir.pwd)
         issue = select_issue(issues)
-        git.branch(issue["branchName"]).checkout
+        git.branch(issue.branch).checkout
       elsif params[:open]
         issues.each do |issue|
-          Launchy.open("https://linear.app/viaeurope/issue/#{issue["identifier"]}")
+          Launchy.open("https://linear.app/viaeurope/issue/#{issue.identifier}")
         end
       elsif params[:assign]
         issue = select_issue(issues)
@@ -154,56 +135,34 @@ module Via
           puts "Something went wrong"
         end
       else
-        puts(issues.map do |issue|
-          issue_to_text(issue)
-        end.join("\n\n"))
-      end
-    end
+        case params[:format]
+        when "summary"
+          issues.each_with_index do |issue, index|
+            issue.summarize
 
-    def issue_to_text(issue)
-      pastel = Pastel.new
-
-      formatted_description = TTY::Markdown
-        .parse(
-          issue["description"].gsub(/~.*~/) do |str|
-            pastel.strikethrough(str[1..-2])
+            puts "\n" if index < issues.size - 1
           end
-        )
+        when "poem"
+          issues.each_with_index do |issue, index|
+            issue.poemize
 
-      text = ["#{pastel.cyan(issue["identifier"])}: #{pastel.green(issue["title"])}"]
+            puts "\n" if index < issues.size - 1
+          end
+        else
+          issues.each_with_index do |issue, index|
+            puts issue.to_markdown
 
-      case params[:format]
-      when "summary"
-        text << pastel.bright_green(pastel.strip(TTY::Markdown.parse(SummarizeModel.new.next(<<~STR))))
-          Title: #{issue["title"]}
-          Description: #{issue["description"]}
-        STR
-      when "poem"
-        text << pastel.bright_green(pastel.strip(TTY::Markdown.parse(PoemizeModel.new.next(<<~STR))))
-          Title: #{issue["title"]}
-          Description: #{issue["description"]}
-        STR
-      end
-
-      text << formatted_description
-
-      if issue.has_key? "comments"
-        issue["comments"]["nodes"].each do |comment|
-          formatted_comment = pastel.green(comment["user"]["name"] + " commented:") + "\n" + TTY::Markdown.parse(comment["body"])
-          text << formatted_comment.chomp
+            puts "\n" if index < issues.size - 1
+          end
         end
       end
-
-      text.join("\n\n")
     end
 
     def select_issue(issues)
       return issues.first if issues.one?
 
-      pastel = Pastel.new
-
       formatted_issues = issues.map do |issue|
-        {name: "#{pastel.cyan(issue["identifier"])}: #{pastel.green(issue["title"])}", value: issue}
+        {name: issue.title_markdown, value: issue}
       end
 
       prompt = TTY::Prompt.new
