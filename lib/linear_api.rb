@@ -133,7 +133,8 @@ class LinearAPI
       issueUpdate(
         id: "#{issue_id}",
         input: {
-          stateId: "#{STATE_IN_PROGRESS}"
+          stateId: "#{STATE_IN_PROGRESS}",
+          assigneeId: "#{user_id}"
         }
       ) {
         success
@@ -154,8 +155,7 @@ class LinearAPI
       issueUpdate(
         id: "#{issue_id}",
         input: {
-          stateId: "#{STATE_DONE}",
-          assigneeId: "#{user_id}"
+          stateId: "#{STATE_DONE}"
         }
       ) {
         success
