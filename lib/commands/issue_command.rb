@@ -118,7 +118,7 @@ module Via
         end
       elsif params[:assign]
         issue = select_issue(issues)
-        result = LinearAPI.new.assign_issue(issue["identifier"])
+        result = LinearAPI.new.assign_issue(issue.identifier)
 
         if result["issueUpdate"]["success"]
           puts "You are now assigned to issue #{result["issueUpdate"]["issue"]["identifier"]}"
@@ -127,7 +127,7 @@ module Via
         end
       elsif params[:finish]
         issue = select_issue(issues)
-        result = LinearAPI.new.finish_issue(issue["identifier"])
+        result = LinearAPI.new.finish_issue(issue.identifier)
 
         if result["issueUpdate"]["success"]
           puts "Issue #{result["issueUpdate"]["issue"]["identifier"]} is now marked as done!"
