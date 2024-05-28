@@ -37,7 +37,7 @@ class Issue
 
   def to_markdown
     text = [title_markdown, description_markdown]
-    text << comments_markdown if @comments["nodes"].any?
+    text << comments_markdown if @comments && @comments["nodes"].any?
 
     text.join("\n\n")
   end
