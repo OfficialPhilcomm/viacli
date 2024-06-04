@@ -62,7 +62,7 @@ class Issue
   def comments_markdown
     pastel = Pastel.new
 
-    @comments["nodes"].map do |comment|
+    @comments["nodes"].reverse.map do |comment|
       pastel.green(comment["user"]["name"] + " commented:") + "\n" + TTY::Markdown.parse(comment["body"]).chomp
     end
   end
