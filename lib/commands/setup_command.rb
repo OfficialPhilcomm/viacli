@@ -61,7 +61,7 @@ module Via
       PersistentMemory.new("assign_state_id").state = assign_state
       assign_state_spinner.success
 
-      in_progress_states = prompt.multi_select "Which state is considered \"In Progress\" (relevant for #{pastel.yellow "via issue current"})?", states_map
+      in_progress_states = prompt.multi_select "Which issue states should be considered when using #{pastel.yellow "via issue current"}?", states_map
       in_progress_states_spinner = spinner("Configuring in progress states")
       PersistentMemory.new("in_progress_state_ids").state = in_progress_states.join("\n")
       in_progress_states_spinner.success
