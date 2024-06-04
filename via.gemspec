@@ -16,6 +16,7 @@ Gem::Specification.new do |s|
   s.add_dependency "tty-option", ["~> 0.2"]
   s.add_dependency "tty-prompt", ["~> 0.23.1"]
   s.add_dependency "tty-markdown", ["~> 0.7.2"]
+  s.add_dependency "tty-spinner", ["~> 0.9.3"]
   s.add_dependency "pastel", ["~> 0.8.0"]
   s.add_dependency "launchy", ["~> 2.5"]
   s.add_dependency "git", ["~> 1.19"]

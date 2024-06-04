@@ -11,8 +11,11 @@ class LinearAPI
   headers "Content-Type": "application/json"
   headers "Authorization": ENV["LINEAR_API_TOKEN"]
 
-  STATE_IN_PROGRESS = "c692bedf-432b-40ba-acbb-3657ad8113e2"
-  STATE_DONE = "cd6c7a8a-05b2-40fe-8e67-a8c2dbd07273"
+  TEAM = PersistentMemory.new("team_id").state
+  STATE_TO_DO = PersistentMemory.new("to_do_state_id").state
+  STATE_ASSIGN = PersistentMemory.new("assign_state_id").state
+  STATE_IN_PROGRESS = PersistentMemory.new("in_progress_state_ids").state
+  STATE_FINSIH = PersistentMemory.new("finish_state_id").state
 
   def get_issue(ref)
     query = <<~GRAPHQL
@@ -44,8 +47,8 @@ class LinearAPI
   def get_current_issues
     query = <<~GRAPHQL
       issues(filter: {
-        team: { name: { eq: "Platform" } }
-        state: { name: { in: ["In Progress", "Review"] } }
+        team: { id: { eq: "#{TEAM}" } }
+        state: { id: { in: [#{in_progress_states_string}] } }
         assignee: {
           isMe: { eq: true }
         }
@@ -86,12 +89,12 @@ class LinearAPI
     query = <<~GRAPHQL
       cycles(filter: {
         isActive: { eq: true }
-        team: { name: { eq: "Platform" } }
+        team: { id: { eq: "#{TEAM}" } }
       }) {
         nodes {
           issues(
             filter: {
-              state: { name: { eq: "To Do" } }
+              state: { id: { eq: "#{STATE_TO_DO}" } }
               assignee: {
                 null: true
               }
@@ -113,6 +116,7 @@ class LinearAPI
         }
       }
     GRAPHQL
+
     result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
     issues = result["data"]["cycles"]["nodes"].first["issues"]["nodes"]
 
@@ -133,7 +137,7 @@ class LinearAPI
       issueUpdate(
         id: "#{issue_id}",
         input: {
-          stateId: "#{STATE_IN_PROGRESS}",
+          stateId: "#{STATE_ASSIGN}",
           assigneeId: "#{user_id}"
         }
       ) {
@@ -155,7 +159,7 @@ class LinearAPI
       issueUpdate(
         id: "#{issue_id}",
         input: {
-          stateId: "#{STATE_DONE}"
+          stateId: "#{STATE_FINSIH}"
         }
       ) {
         success
@@ -176,5 +180,43 @@ class LinearAPI
     GRAPHQL
     result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
     result["data"]["viewer"]["id"]
+  end
+
+  def teams
+    query = <<~GRAPHQL
+      viewer {
+        teams {
+          nodes {
+            id
+            name
+          }
+        }
+      }
+    GRAPHQL
+    result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
+    result["data"]["viewer"]["teams"]["nodes"]
+  end
+
+  def states(team_id)
+    query = <<~GRAPHQL
+      team(id: "#{team_id}") {
+        states {
+          nodes {
+            id
+            name
+          }
+        }
+      }
+    GRAPHQL
+    result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
+    result["data"]["team"]["states"]["nodes"]
+  end
+
+  private
+
+  def in_progress_states_string
+    STATE_IN_PROGRESS.split("\n").map do |state|
+      "\"#{state}\""
+    end.join(", ")
   end
 end
