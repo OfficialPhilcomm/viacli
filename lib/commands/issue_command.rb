@@ -35,12 +35,12 @@ module Via
       program "via"
       command "issue"
 
-      description "Open a specific GitHub issue"
+      description "Interact with Linear issues"
     end
 
     argument :id do
       required
-      desc "Linear Issue ID"
+      desc "Linear Issue ID, can also be #{Pastel.new.yellow("next")} to fetch next unassigned issue in To Do, or #{Pastel.new.yellow("current")} for issues assigned to you that are in progress. #{Pastel.new.yellow("last")} will use the last issue interacted with."
     end
 
     flag :help do
@@ -52,7 +52,7 @@ module Via
     flag :checkout do
       short "-c"
       long "--checkout"
-      desc "Checkout to the issue branch"
+      desc "Checkout the issue branch"
     end
 
     flag :open do
@@ -70,13 +70,13 @@ module Via
     flag :select do
       short "-s"
       long "--select"
-      desc "Allow selection of specific issue"
+      desc "Allow selection of specific issue, if multiple are found, e.g. with #{Pastel.new.yellow("current")}"
     end
 
     flag :gpt do
       short "-g"
       long "--gpt"
-      desc "Let GPT answer questions"
+      desc "Let GPT answer questions about the issue"
     end
 
     flag :finish do
@@ -87,7 +87,7 @@ module Via
     option :format do
       short "-f"
       long "--format string"
-      desc "Format of the output"
+      desc "Format of the output, and add a gpt generated summary, or poem"
       default "markdown"
       permit %w[markdown summary poem]
     end

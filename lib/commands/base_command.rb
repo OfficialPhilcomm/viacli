@@ -10,7 +10,7 @@ module Via
 
       description "Via Toolkit",
         "\nCommands:",
-        "  via issue - Fetch issue data"
+        "  via issue - Interact with Linear issues",
         "  via setup - Setup the project"
     end
 
