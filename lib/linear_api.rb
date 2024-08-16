@@ -85,50 +85,6 @@ class LinearAPI
     end
   end
 
-  def get_next_cycle_issue
-    query = <<~GRAPHQL
-      cycles(filter: {
-        isActive: { eq: true }
-        team: { id: { eq: "#{TEAM}" } }
-      }) {
-        nodes {
-          issues(
-            filter: {
-              state: { id: { eq: "#{STATE_TO_DO}" } }
-              assignee: {
-                null: true
-              }
-            }
-          ) {
-            nodes {
-              identifier
-              title
-              description
-              state {
-                name
-              }
-              priority
-              priorityLabel
-              sortOrder
-              branchName
-            }
-          }
-        }
-      }
-    GRAPHQL
-
-    result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
-    issues = result["data"]["cycles"]["nodes"].first["issues"]["nodes"]
-
-    priority_map = [5, 1, 2, 3, 4]
-
-    issue = issues.sort_by do |issue|
-      [priority_map[issue["priority"]], issue["sortOrder"]]
-    end.first
-
-    Issue.new(issue)
-  end
-
   def assign_issue(issue_id)
     user_id = PersistentMemory.new("user_id").state
     return puts("User ID not set. Use via setup") if user_id.nil?

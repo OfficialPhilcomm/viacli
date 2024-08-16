@@ -40,7 +40,7 @@ module Via
 
     argument :id do
       required
-      desc "Linear Issue ID, can also be #{Pastel.new.yellow("next")} to fetch next unassigned issue in To Do, or #{Pastel.new.yellow("current")} for issues assigned to you that are in progress. #{Pastel.new.yellow("last")} will use the last issue interacted with."
+      desc "Linear Issue ID, can also be #{Pastel.new.yellow("current")} for issues assigned to you that are in progress. #{Pastel.new.yellow("last")} will use the last issue interacted with."
     end
 
     flag :help do
@@ -173,8 +173,6 @@ module Via
       case params[:id]
       when "current"
         LinearAPI.new.get_current_issues
-      when "next"
-        [LinearAPI.new.get_next_cycle_issue]
       when "last"
         if !last_issues.state.nil?
           last_issues.state
