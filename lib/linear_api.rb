@@ -17,6 +17,47 @@ class LinearAPI
   STATE_IN_PROGRESS = PersistentMemory.new("in_progress_state_ids").state
   STATE_FINSIH = PersistentMemory.new("finish_state_id").state
 
+  def get_next_issue
+    query = <<~GRAPHQL
+      team(id: "#{TEAM}") {
+        issues(filter: {
+          state: { id: { eq: "#{STATE_TO_DO}" } }
+          assignee: {
+            null: true
+          }
+        }) {
+          nodes {
+            identifier
+            title
+            description
+            state {
+              name
+            }
+            priority
+            priorityLabel
+            sortOrder
+            branchName
+            comments {
+              nodes {
+                body
+                user {
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    GRAPHQL
+    result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
+
+    result["data"]["team"]["issues"]["nodes"].sort_by do |issue|
+      issue["sortOrder"]
+    end.map do |issue|
+      Issue.new(issue)
+    end.first
+  end
+
   def get_issue(ref)
     query = <<~GRAPHQL
       issue(id: "#{ref}") {
