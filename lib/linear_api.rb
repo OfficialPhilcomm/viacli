@@ -82,6 +82,9 @@ class LinearAPI
       }
     GRAPHQL
     result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
+    if result["data"].nil?
+      return nil
+    end
     Issue.new(result["data"]["issue"])
   end
 
