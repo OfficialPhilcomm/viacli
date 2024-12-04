@@ -204,12 +204,22 @@ class LinearAPI
           nodes {
             id
             name
+            position
+            type
           }
         }
       }
     GRAPHQL
+
+    type_order = %w[triage backlog unstarted started completed canceled]
+
     result = self.class.post("/graphql", body: {query: "{#{query}}"}.to_json)
-    result["data"]["team"]["states"]["nodes"]
+    result["data"]["team"]["states"]["nodes"].sort_by do |state|
+      [
+        type_order.find_index(state["type"]),
+        state["name"]
+      ]
+    end
   end
 
   private
