@@ -40,7 +40,7 @@ module Via
 
     argument :id do
       required
-      desc "Linear Issue ID, can also be #{Pastel.new.yellow("next")} to fetch next unassigned issue in To Do, or #{Pastel.new.yellow("current")} for issues assigned to you that are in progress. #{Pastel.new.yellow("last")} will use the last issue interacted with."
+      desc "Linear Issue ID, can also be #{Pastel.new.yellow.bold("next")} to fetch next unassigned issue in To Do, or #{Pastel.new.yellow.bold("current")} for issues assigned to you that are in progress. #{Pastel.new.yellow.bold("last")} will use the last issue interacted with, and #{Pastel.new.yellow.bold("branch")} will show you the issue linked to the current branch. Note that this only works when using the linear branches."
     end
 
     flag :help do
@@ -70,7 +70,7 @@ module Via
     flag :select do
       short "-s"
       long "--select"
-      desc "Allow selection of specific issue, if multiple are found, e.g. with #{Pastel.new.yellow("current")}"
+      desc "Allow selection of specific issue, if multiple are found, e.g. with #{Pastel.new.yellow.bold("current")}"
     end
 
     flag :gpt do
@@ -184,6 +184,17 @@ module Via
             end
         else
           puts "No last issue found"
+          exit 1
+        end
+      when "branch"
+        git = Git.open(Dir.pwd)
+        ref_regex = /\A(?<ref>[a-z]+-\d+)/
+
+        match = git.current_branch.match(ref_regex)
+        if match
+          [LinearAPI.new.get_issue(match[:ref])]
+        else
+          puts "Issue ref could not be extracted from the branch name"
           exit 1
         end
       else

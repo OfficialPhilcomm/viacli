@@ -9,4 +9,5 @@ If you don't have an openai token, you can get request one from the APIX team.
 Before using it the first time, you have to run `via setup`. This will fetch your linear user id, which is needed for some requests.
 
 # Usage
-Run `via -h` to see command usage
+Run `via -h` to see command usage.
+More information on the issue command can be found with `via i -h` or `via issue -h`.
