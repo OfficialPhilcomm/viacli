@@ -26,10 +26,10 @@ class PersistentMemory
   end
 
   def file_location
-    File.join(Dir.home, ".local/shared/viacli/#{name}.mem")
+    File.join(Dir.home, ".local/share/viacli/#{name}.mem")
   end
 end
 
 Dir.mkdir(File.join(Dir.home, ".local/")) if !Dir.exist?(File.join(Dir.home, ".local/"))
-Dir.mkdir(File.join(Dir.home, ".local/shared")) if !Dir.exist?(File.join(Dir.home, ".local/shared"))
-Dir.mkdir(File.join(Dir.home, ".local/shared/viacli")) if !Dir.exist?(File.join(Dir.home, ".local/shared/viacli"))
+Dir.mkdir(File.join(Dir.home, ".local/share")) if !Dir.exist?(File.join(Dir.home, ".local/share"))
+Dir.mkdir(File.join(Dir.home, ".local/share/viacli")) if !Dir.exist?(File.join(Dir.home, ".local/share/viacli"))
