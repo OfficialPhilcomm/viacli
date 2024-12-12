@@ -96,6 +96,8 @@ module Via
       return print(help) if params[:help]
       return puts(params.errors.summary) if params.errors.any?
 
+      validate_setup
+
       issues = resolve_issues
 
       return puts("No issues found") if issues.none?
@@ -228,6 +230,22 @@ module Via
         rescue Interrupt
           quit = true
         end
+      end
+    end
+
+    def validate_setup
+      valid = [
+        PersistentMemory.new("team_id").state.nil?,
+        PersistentMemory.new("to_do_state_id").state.nil?,
+        PersistentMemory.new("assign_state_id").state.nil?,
+        PersistentMemory.new("in_progress_state_ids").state.nil?,
+        PersistentMemory.new("finish_state_id").state.nil?,
+        PersistentMemory.new("user_id").state.nil?
+      ].none?
+
+      if !valid
+        puts "Some configuration is missing. Please run #{Pastel.new.yellow.bold("via setup")} to fix it."
+        exit 1
       end
     end
   end
